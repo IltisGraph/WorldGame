@@ -397,6 +397,7 @@
                     }),
                     success: function(response) {
                         if (response === "Ok" || (response && response.message === "Ok")) {
+                            alert("Registrierung erhalten. Kläre bitte mit dem Admin (Roman), wann du anfangen kannst.");
                             window.location.href = '/login.html';
                         } else {
                             alert("Registrierung fehlgeschlagen.");
