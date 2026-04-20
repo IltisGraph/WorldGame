@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrieren - WorldGame</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            background-color: #050510; /* Dark night sky color */
+            color: #ffffff;
+            overflow: hidden; /* Prevent scrolling if video is large */
+        }
+
+        .register-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50vh; /* Top half for login on mobile */
+            max-height: 100vh;
+            overflow-y: auto; /* Important: allows scrolling for longer forms */
+            padding: 2rem;
+            background: linear-gradient(to bottom, rgba(5, 5, 16, 1) 0%, rgba(5, 5, 16, 0.7) 100%);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group {
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 1rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-control option {
+            color: #000; /* Makes options readable on Windows/Chrome */
+            background: #fff;
+        }
+
+        .stats-box {
+            width: 100%;
+            max-width: 320px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 1rem;
+            display: none; /* hidden by default */
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .btn-register {
+            width: 100%;
+            max-width: 320px;
+            padding: 14px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-register::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #5b52f6 0%, #8b4bf8 100%);
+        }
+
+        .btn-register:hover::before {
+            left: 100%;
+        }
+
+        .btn-register:disabled {
+            background: #374151;
+            color: #9CA3AF;
+            border-color: transparent;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            text-shadow: none;
+        }
+
+        .auth-link {
+            margin-top: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .auth-link:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        /* Bottom Visual Area */
+        .visual-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60vh;
+            z-index: 1;
+        }
+
+        .visual-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, rgba(5,5,16,1) 0%, transparent 100%);
+            z-index: 3;
+        }
+
+        .planet-image, .planet-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center; 
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .planet-image {
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .planet-video {
+            opacity: 0;
+            z-index: 2;
+        }
+
+        .planet-video.loaded {
+            opacity: 1;
+        }
+
+        @media (min-width: 768px) {
+            .register-container {
+                height: 100vh;
+                width: 40%;
+                float: left;
+                background: #050510;
+                align-items: flex-start;
+                padding-left: 10%;
+                justify-content: center;
+            }
+
+            .visual-container {
+                height: 100vh;
+                width: 60%;
+                left: 40%;
+            }
+
+            .visual-container::after {
+                height: 100%;
+                width: 100px;
+                background: linear-gradient(to right, #050510 0%, transparent 100%);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <div class="logo">WorldGame</div>
+        
+        <div class="form-group">
+            <input type="text" id="realname" class="form-control" placeholder="Echter Name (ist privat)" aria-label="Real Name">
+        </div>
+        <div class="form-group">
+            <input type="text" id="username" class="form-control" placeholder="Benutzername (ist öffentlich)" aria-label="Username">
+        </div>
+        <div class="form-group">
+            <input type="password" id="password" class="form-control" placeholder="Passwort" aria-label="Password">
+        </div>
+        <div class="form-group">
+            <input type="password" id="confirm_password" class="form-control" placeholder="Passwort bestätigen" aria-label="Confirm Password">
+        </div>
+        <div class="form-group">
+            <select id="country" class="form-control" aria-label="Country">
+                <option value="">Lade Länder...</option>
+            </select>
+        </div>
+
+        <div id="country-stats" class="stats-box">
+            <!-- Country stats will be injected here via JS -->
+        </div>
+
+        <button id="registerBtn" class="btn-register">Registrieren</button>
+        
+        <a href="login.html" class="auth-link">Bereits einen Account? Hier einloggen</a>
+    </div>
+
+    <div class="visual-container">
+        <img src="2_start_image.png" alt="Planet at night" class="planet-image" id="planetImage">
+        <video loop muted playsinline class="planet-video" id="planetVideo" preload="auto">
+            <source src="20001-0600.mkv" type="video/x-matroska">
+            <source src="20001-0600.mkv" type="video/webm">
+            <source src="20001-0600.mkv" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <script type="module">
+        import $ from 'jquery';
+
+        $(document).ready(function() {
+            var $video = $('#planetVideo');
+            var videoElement = $video.get(0);
+
+            // Video Background Loading
+            $video.on('canplay canplaythrough playing', function() {
+                if (!$video.hasClass('loaded')) {
+                    $video.addClass('loaded');
+                }
+            });
+
+            videoElement.play().then(function() {
+                $video.addClass('loaded');
+            }).catch(function(error) {
+                console.log("Autoplay prevented:", error);
+            });
+            
+            if (videoElement.readyState >= 3) {
+                $video.addClass('loaded');
+            }
+
+            // --- Registration Handling ---
+            let countriesData = [];
+
+            // 1. Fetch countries on load
+            $.ajax({
+                url: '/api/countries',
+                type: 'GET',
+                success: function(data) {
+                    countriesData = data || [];
+                    const $select = $('#country');
+                    $select.empty().append('<option value="">Wähle ein Land aus...</option>');
+                    
+                    countriesData.forEach(function(country, index) {
+                        // Using country name if it exists, otherwise fallback to "Land X"
+                        const name = country.name || `Land ${index + 1}`;
+                        $select.append(`<option value="${index}">${name}</option>`);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    $('#country').empty().append('<option value="">Fehler beim Laden</option>');
+                    console.error("Fehler beim Laden der Länder:", error);
+                }
+            });
+
+            // 2. Display country stats on selection
+            $('#country').on('change', function() {
+                const idx = $(this).val();
+                const $stats = $('#country-stats');
+                
+                if (idx === "") {
+                    $stats.hide();
+                    return;
+                }
+
+                const c = countriesData[idx];
+                $stats.html(`
+                    <div class="stats-grid">
+                        <div class="stat-item"><span class="stat-label">Bevölkerung</span><span class="stat-value">${c.population.toLocaleString()}</span></div>
+                        <div class="stat-item"><span class="stat-label">Ressourcen</span><span class="stat-value">${c.ressources}/100</span></div>
+                        <div class="stat-item"><span class="stat-label">Budget</span><span class="stat-value">${c.budget.toLocaleString()}</span></div>
+                        <div class="stat-item"><span class="stat-label">Zufriedenheit</span><span class="stat-value">${c.happiness}/100</span></div>
+                        <div class="stat-item"><span class="stat-label">Regierung</span><span class="stat-value">${c.government_type}</span></div>
+                        <div class="stat-item"><span class="stat-label">Wirtschaft</span><span class="stat-value">${c.economy}</span></div>
+                    </div>
+                `).fadeIn(200);
+            });
+
+            // 3. Submit Registration
+            $('#registerBtn').on('click', function(e) {
+                e.preventDefault();
+                
+                var realname = $('#realname').val();
+                var username = $('#username').val();
+                var password = $('#password').val();
+                var confirm_password = $('#confirm_password').val();
+                var countryIdx = $('#country').val();
+                
+                if (!realname || !username || !password || !confirm_password || countryIdx === "") {
+                    alert('Bitte fülle alle Felder aus!');
+                    return;
+                }
+
+                if (password !== confirm_password) {
+                    alert('Die Passwörter stimmen nicht überein.');
+                    return;
+                }
+                
+                var $btn = $(this);
+                $btn.prop('disabled', true).text('Verarbeite...');
+
+                var selectedCountry = countriesData[countryIdx];
+
+                $.ajax({
+                    url: '/api/register',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        realname: realname,
+                        username: username,
+                        password: password,
+                        country: selectedCountry 
+                    }),
+                    success: function(response) {
+                        if (response === "Ok" || (response && response.message === "Ok")) {
+                            window.location.href = '/login.html';
+                        } else {
+                            alert("Registrierung fehlgeschlagen.");
+                            $btn.prop('disabled', false).text("Registrieren");
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Fehler bei der Registrierung: " + (xhr.responseText || error));
+                        $btn.prop('disabled', false).text("Registrieren");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

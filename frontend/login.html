@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WorldGame</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            background-color: #050510; /* Dark night sky color */
+            color: #ffffff;
+            overflow: hidden; /* Prevent scrolling if video is large */
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 50vh; /* Top half for login on mobile */
+            padding: 2rem;
+            background: linear-gradient(to bottom, rgba(5, 5, 16, 1) 0%, rgba(5, 5, 16, 0.7) 100%);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group {
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 1.2rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-login {
+            width: 100%;
+            max-width: 320px;
+            padding: 14px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #5b52f6 0%, #8b4bf8 100%);
+        }
+
+        .btn-login:hover::before {
+            left: 100%;
+        }
+
+        .btn-login:active {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4), inset 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-login:disabled {
+            background: #374151;
+            color: #9CA3AF;
+            border-color: transparent;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            text-shadow: none;
+        }
+
+        .btn-login:disabled::before {
+            display: none;
+        }
+
+        /* Bottom Visual Area */
+        .visual-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60vh; /* Bottom 60% of screen to overlap slightly with gradient */
+            z-index: 1;
+        }
+
+        .visual-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, rgba(5,5,16,1) 0%, transparent 100%);
+            z-index: 3;
+        }
+
+        .planet-image, .planet-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center; 
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .planet-image {
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .planet-video {
+            opacity: 0;
+            z-index: 2;
+        }
+
+        .planet-video.loaded {
+            opacity: 1;
+        }
+
+        @media (min-width: 768px) {
+            .login-container {
+                height: 100vh;
+                width: 40%;
+                float: left;
+                background: #050510;
+                align-items: flex-start;
+                padding-left: 10%;
+                justify-content: center;
+            }
+
+            .visual-container {
+                height: 100vh;
+                width: 60%;
+                left: 40%;
+            }
+
+            .visual-container::after {
+                height: 100%;
+                width: 100px;
+                background: linear-gradient(to right, #050510 0%, transparent 100%);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo">WorldGame</div>
+        <div class="form-group">
+            <input type="text" id="username" class="form-control" placeholder="(Benutzer-)Name" aria-label="Username">
+        </div>
+        <div class="form-group">
+            <input type="password" id="password" class="form-control" placeholder="Passwort" aria-label="Password">
+        </div>
+        <button id="loginBtn" class="btn-login">Los geht's!</button>
+    </div>
+
+    <div class="visual-container">
+        <!-- Placeholder Image -->
+        <img src="2_start_image.png" alt="Planet at night" class="planet-image" id="planetImage">
+        
+        <!-- Video that loads and plays -->
+        <!-- Note: MKV support varies by browser. If video fails to play, consider converting to MP4/WebM -->
+        <video loop muted playsinline class="planet-video" id="planetVideo" preload="auto">
+            <!-- Trying multiple MIME types as a fallback for MKV container -->
+            <source src="20001-0600.mkv" type="video/x-matroska">
+            <source src="20001-0600.mkv" type="video/webm">
+            <source src="20001-0600.mkv" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <script type="module">
+        import $ from 'jquery';
+
+        $(document).ready(function() {
+            var $video = $('#planetVideo');
+            var videoElement = $video.get(0);
+
+            // Listen for the video to be ready to play
+            $video.on('canplay canplaythrough playing', function() {
+                // Video is loaded enough to play
+                if (!$video.hasClass('loaded')) {
+                    $video.addClass('loaded');
+                }
+            });
+
+            // Start playing
+            videoElement.play().then(function() {
+                // Once playback successfully starts, ensure it is visible
+                $video.addClass('loaded');
+            }).catch(function(error) {
+                console.log("Autoplay was prevented or video format not supported:", error);
+            });
+            
+            // Fallback: if 'canplay' doesn't fire fast enough, check readyState
+            if (videoElement.readyState >= 3) {
+                $video.addClass('loaded');
+            }
+
+            // --- Login Handling ---
+            $('#loginBtn').on('click', function(e) {
+                e.preventDefault();
+                
+                var username = $('#username').val();
+                var password = $('#password').val();
+                
+                if (!username || !password) {
+                    alert('Bitte füllen Sie beide Felder aus.');
+                    return;
+                }
+                
+                var $btn = $(this);
+                // Disable button and show loading text
+                $btn.prop('disabled', true).text('Lade...');
+
+                $.ajax({
+                    url: '/api/login',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    success: function(response) {
+                        // Check if the response is explicitly "Ok"
+                        if (response === "Ok" || (response && response.message === "Ok")) {
+                            // The browser automatically handles the `Set-Cookie` header
+                            // returned by Gorilla sessions on the same origin.
+                            window.location.href = '/game';
+                        } else {
+                            alert("Login fehlgeschlagen.");
+                            $btn.prop('disabled', false).text("Los geht's!");
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Fehler beim Login: " + (xhr.responseText || error));
+                        $btn.prop('disabled', false).text("Los geht's!");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
