@@ -350,12 +350,14 @@
                 const c = countriesData[idx];
                 $stats.html(`
                     <div class="stats-grid">
-                        <div class="stat-item"><span class="stat-label">Bevölkerung</span><span class="stat-value">${c.population.toLocaleString()}</span></div>
-                        <div class="stat-item"><span class="stat-label">Ressourcen</span><span class="stat-value">${c.ressources}/100</span></div>
-                        <div class="stat-item"><span class="stat-label">Budget</span><span class="stat-value">${c.budget.toLocaleString()}</span></div>
-                        <div class="stat-item"><span class="stat-label">Zufriedenheit</span><span class="stat-value">${c.happiness}/100</span></div>
-                        <div class="stat-item"><span class="stat-label">Regierung</span><span class="stat-value">${c.government_type}</span></div>
-                        <div class="stat-item"><span class="stat-label">Wirtschaft</span><span class="stat-value">${c.economy}</span></div>
+                        <div class="stat-item"><span class="stat-label">Name</span><span class="stat-value">${c.name || '-'}</span></div>
+                        <div class="stat-item"><span class="stat-label">Regierung</span><span class="stat-value">${c.government_type || '-'}</span></div>
+                        <div class="stat-item"><span class="stat-label">Bevölkerung</span><span class="stat-value">${c.population ? c.population.toLocaleString() : '0'}</span></div>
+                        <div class="stat-item"><span class="stat-label">Budget</span><span class="stat-value">${c.budget ? c.budget.toLocaleString() : '0'}</span></div>
+                        <div class="stat-item"><span class="stat-label">Wirtschaft</span><span class="stat-value">${c.economy || 0}/100</span></div>
+                        <div class="stat-item"><span class="stat-label">Zufriedenheit</span><span class="stat-value">${c.happiness || 0}/100</span></div>
+                        <div class="stat-item"><span class="stat-label">Ressourcen</span><span class="stat-value">${c.ressources || 0}</span></div>
+                        <div class="stat-item"><span class="stat-label">Sichtbar</span><span class="stat-value">${c.visible ? 'Ja' : 'Nein'}</span></div>
                     </div>
                 `).fadeIn(200);
             });
@@ -393,7 +395,7 @@
                         realname: realname,
                         username: username,
                         password: password,
-                        country: selectedCountry 
+                        country: selectedCountry.name 
                     }),
                     success: function(response) {
                         if (response === "Ok" || (response && response.message === "Ok")) {

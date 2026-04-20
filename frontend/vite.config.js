@@ -18,7 +18,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         login: resolve(__dirname, 'login.html'),
-        // game: resolve(__dirname, 'game.html'), // Make sure to add all your MPA pages here!
+        game: resolve(__dirname, 'game.html'), // Make sure to add all your MPA pages here!
       }
     }
   }

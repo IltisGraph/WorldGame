@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Präsidenten-Kommandozentrale</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #050510; /* Dark night sky color */
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Video Background */
+        #video-background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Behind everything */
+            overflow: hidden;
+            background-color: #050510;
+        }
+
+        #video-background-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Gradient overlay to make text more readable and darken edges */
+            background: radial-gradient(circle at center, rgba(5,5,16,0.3) 0%, rgba(5,5,16,0.9) 100%);
+            z-index: 1;
+        }
+
+        .planet-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center; 
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .planet-video.loaded {
+            opacity: 1;
+        }
+
+        #header {
+            background: linear-gradient(to bottom, rgba(5, 5, 16, 0.9) 0%, rgba(5, 5, 16, 0.4) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #fff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        #main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            flex-direction: column;
+            z-index: 5;
+        }
+
+        @media (min-width: 768px) {
+            #main-content {
+                flex-direction: row;
+            }
+        }
+
+        #map-viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: transparent;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        #map-viewport:active {
+            cursor: grabbing;
+        }
+
+        #map-container {
+            position: absolute;
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        #map-outline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            display: block;
+            /* Added glow to the map outline so it stands out over the video */
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
+        }
+
+        #highlight-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            opacity: 0.6;
+            mix-blend-mode: screen;
+        }
+
+        #orders-panel {
+            background: rgba(5, 5, 16, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            width: 100%;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (min-width: 768px) {
+            #orders-panel {
+                width: 400px;
+                height: 100%;
+                border-top: none;
+                border-left: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        #orders-header {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #orders-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            flex: 1;
+            box-sizing: border-box;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .form-group textarea:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+        
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-order {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-order::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-order:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #5b52f6 0%, #8b4bf8 100%);
+        }
+
+        .btn-order:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .btn-order:active:not(:disabled) {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4), inset 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-order:disabled {
+            background: #374151;
+            color: #9CA3AF;
+            border-color: transparent;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            text-shadow: none;
+        }
+        
+        .btn-order:disabled::before {
+            display: none;
+        }
+
+        #selected-country-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #selected-country-name {
+            color: #fff;
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+        }
+        
+        #country-details {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .status-player {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Loading overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #050510;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            font-size: 1.2rem;
+            flex-direction: column;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border-top-color: #7C3AED;
+            border-right-color: #4F46E5;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Controls */
+        #map-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 5;
+        }
+        
+        @media (max-width: 767px) {
+            #map-controls {
+                bottom: auto;
+                top: 20px;
+            }
+        }
+        
+        .control-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(5, 5, 16, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="video-background-container">
+        <video loop muted playsinline class="planet-video" id="planetVideo" preload="auto">
+            <source src="20001-0600.mkv" type="video/x-matroska">
+            <source src="20001-0600.mkv" type="video/webm">
+            <source src="20001-0600.mkv" type="video/mp4">
+        </video>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div>Initialisiere Satellitenverbindung...</div>
+    </div>
+
+    <div id="header">
+        <h1>WorldGame Kommandozentrale</h1>
+        <div style="font-family: monospace; font-size: 1.1rem; color: rgba(255,255,255,0.7);">DEFCON 3 | JAHR 2024</div>
+    </div>
+
+    <div id="main-content">
+        <div id="map-viewport">
+            <div id="map-container">
+                <img id="map-outline" src="/map_outline.png" alt="World Map Outline">
+                <canvas id="highlight-canvas"></canvas>
+            </div>
+            
+            <div id="map-controls">
+                <div class="control-btn" id="btn-zoom-in">+</div>
+                <div class="control-btn" id="btn-zoom-out">-</div>
+                <div class="control-btn" id="btn-center">⌂</div>
+            </div>
+        </div>
+
+        <div id="orders-panel">
+            <div id="orders-header">STRATEGISCHE ANWEISUNGEN</div>
+            <div id="orders-content">
+                <div id="selected-country-info">
+                    <h2 id="selected-country-name">Wähle ein Territorium</h2>
+                    <p id="country-details">Warte auf Zielerfassung.</p>
+                    <div id="player-badge" class="status-badge status-player" style="display: none;">DEINE NATION</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="order-text">Anweisungsübertragung:</label>
+                    <textarea id="order-text" placeholder="Gib sichere Anweisungen für den KI-Dungeon-Master ein...&#10;&#10;z. B. 'Erhöhe die Militärausgaben um 5% und verlege eine Flugzeugträgerkampfgruppe ins Mittelmeer.'"></textarea>
+                </div>
+                <button class="btn-order" id="submit-order">Befehle übermitteln</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import $ from 'jquery';
+
+        $(document).ready(function() {
+            // Load and play background video
+            var $video = $('#planetVideo');
+            var videoElement = $video.get(0);
+
+            $video.on('canplay canplaythrough playing', function() {
+                if (!$video.hasClass('loaded')) {
+                    $video.addClass('loaded');
+                }
+            });
+
+            videoElement.play().then(function() {
+                $video.addClass('loaded');
+            }).catch(function(error) {
+                console.log("Autoplay was prevented or video format not supported:", error);
+            });
+            
+            if (videoElement.readyState >= 3) {
+                $video.addClass('loaded');
+            }
+        });
+
+        // Example Color to Country Mapping
+        const countryColorMap = {
+            "255,0,0": { id: "USA", name: "Vereinigte Staaten" },
+            "0,255,0": { id: "RUS", name: "Russland" },
+            "0,0,255": { id: "CHN", name: "China" },
+            "255,255,0": { id: "BRA", name: "Brasilien" },
+            "255,0,255": { id: "GBR", name: "Vereinigtes Königreich" },
+            "0,255,255": { id: "FRA", name: "Frankreich" },
+        };
+
+        const playerCountryColor = "255,0,0"; // Example: Player is USA (Red)
+
+        let mapImageData = null;
+        let mapWidth = 0;
+        let mapHeight = 0;
+        
+        let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let initialTranslateX = 0;
+        let initialTranslateY = 0;
+
+        const $viewport = $('#map-viewport');
+        const $container = $('#map-container');
+        const highlightCanvas = document.getElementById('highlight-canvas');
+        const ctxHighlight = highlightCanvas.getContext('2d', { willReadFrequently: true });
+        
+        let currentHighlightedRgb = null;
+
+        const outlineImg = document.getElementById('map-outline');
+        
+        if (outlineImg.complete && outlineImg.naturalWidth > 0) {
+            initMap();
+        } else {
+            outlineImg.onload = initMap;
+        }
+
+        function initMap() {
+            mapWidth = outlineImg.naturalWidth;
+            mapHeight = outlineImg.naturalHeight;
+            
+            if (mapWidth === 0) {
+                setTimeout(initMap, 100);
+                return;
+            }
+
+            $container.css({ width: mapWidth, height: mapHeight });
+            highlightCanvas.width = mapWidth;
+            highlightCanvas.height = mapHeight;
+
+            const colorMapImg = new Image();
+            colorMapImg.src = '/color_map.png';
+            colorMapImg.onload = () => {
+                const offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = mapWidth;
+                offscreenCanvas.height = mapHeight;
+                const ctxOffscreen = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+                
+                ctxOffscreen.drawImage(colorMapImg, 0, 0, mapWidth, mapHeight);
+                
+                try {
+                    mapImageData = ctxOffscreen.getImageData(0, 0, mapWidth, mapHeight);
+                    console.log("Strategische Kartendaten geladen.");
+                    
+                    $('#loading-overlay').fadeOut(500);
+                    
+                    centerMap();
+                    
+                    highlightCountry(playerCountryColor);
+                    updateSelectionPanel(playerCountryColor);
+                    
+                } catch (e) {
+                    console.error("Failed to read map data. CORS issue?", e);
+                    $('#loading-overlay').html('<div>Systemfehler: Kartendaten nicht zugänglich</div>');
+                }
+            };
+            
+            colorMapImg.onerror = () => {
+                console.error("Failed to load color_map.png");
+                $('#loading-overlay').html('<div>Systemfehler: Farbkarte nicht gefunden</div>');
+            }
+        }
+
+        function centerMap() {
+            const vpW = $viewport.width();
+            const vpH = $viewport.height();
+            
+            scale = Math.min(vpW / mapWidth, vpH / mapHeight) * 0.9;
+            if (scale < 0.2) scale = 0.2;
+            
+            translateX = (vpW - (mapWidth * scale)) / 2;
+            translateY = (vpH - (mapHeight * scale)) / 2;
+            
+            applyTransform();
+        }
+
+        function applyTransform() {
+            $container.css('transform', `matrix(${scale}, 0, 0, ${scale}, ${translateX}, ${translateY})`);
+        }
+        
+        $viewport.on('mousedown touchstart', function(e) {
+            if ($(e.target).closest('#map-controls').length) return;
+            
+            isDragging = true;
+            const evt = e.type.includes('touch') ? e.originalEvent.touches[0] : e;
+            dragStartX = evt.clientX;
+            dragStartY = evt.clientY;
+            initialTranslateX = translateX;
+            initialTranslateY = translateY;
+        });
+
+        $(window).on('mousemove touchmove', function(e) {
+            if (!isDragging) return;
+            
+            const evt = e.type.includes('touch') ? e.originalEvent.touches[0] : e;
+            const dx = evt.clientX - dragStartX;
+            const dy = evt.clientY - dragStartY;
+            
+            translateX = initialTranslateX + dx;
+            translateY = initialTranslateY + dy;
+            
+            applyTransform();
+        });
+
+        $(window).on('mouseup touchend', function() {
+            isDragging = false;
+        });
+
+        function zoomAtPoint(zoomFactor, pX, pY) {
+            const oldScale = scale;
+            let newScale = scale * zoomFactor;
+            
+            newScale = Math.max(0.2, Math.min(newScale, 10));
+            
+            translateX = pX - (pX - translateX) * (newScale / oldScale);
+            translateY = pY - (pY - translateY) * (newScale / oldScale);
+            scale = newScale;
+            
+            applyTransform();
+        }
+
+        $viewport.on('wheel', function(e) {
+            e.preventDefault();
+            const zoomFactor = e.originalEvent.deltaY > 0 ? 0.9 : 1.1;
+            
+            const rect = $viewport[0].getBoundingClientRect();
+            const pX = e.clientX - rect.left;
+            const pY = e.clientY - rect.top;
+            
+            zoomAtPoint(zoomFactor, pX, pY);
+        });
+
+        $('#btn-zoom-in').on('click', () => {
+            const vpW = $viewport.width() / 2;
+            const vpH = $viewport.height() / 2;
+            zoomAtPoint(1.2, vpW, vpH);
+        });
+        
+        $('#btn-zoom-out').on('click', () => {
+            const vpW = $viewport.width() / 2;
+            const vpH = $viewport.height() / 2;
+            zoomAtPoint(0.8, vpW, vpH);
+        });
+        
+        $('#btn-center').on('click', centerMap);
+        
+        let clickStartX, clickStartY;
+        $viewport.on('mousedown touchstart', function(e) {
+            const evt = e.type.includes('touch') ? e.originalEvent.touches[0] : e;
+            clickStartX = evt.clientX;
+            clickStartY = evt.clientY;
+        });
+
+        $viewport.on('mouseup touchend', function(e) {
+            if (!mapImageData) return;
+            if ($(e.target).closest('#map-controls').length) return;
+
+            const evt = e.type.includes('touchend') ? e.originalEvent.changedTouches[0] : e;
+            const dx = evt.clientX - clickStartX;
+            const dy = evt.clientY - clickStartY;
+            
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) return;
+
+            const rect = $viewport[0].getBoundingClientRect();
+            const vpX = evt.clientX - rect.left;
+            const vpY = evt.clientY - rect.top;
+            
+            const imgX = Math.floor((vpX - translateX) / scale);
+            const imgY = Math.floor((vpY - translateY) / scale);
+
+            if (imgX >= 0 && imgX < mapWidth && imgY >= 0 && imgY < mapHeight) {
+                const index = (imgY * mapWidth + imgX) * 4;
+                const r = mapImageData.data[index];
+                const g = mapImageData.data[index+1];
+                const b = mapImageData.data[index+2];
+                const a = mapImageData.data[index+3];
+
+                if (a > 10) {
+                    const rgbKey = `${r},${g},${b}`;
+                    
+                    if (rgbKey !== "0,0,0" && rgbKey !== "255,255,255" && rgbKey !== currentHighlightedRgb) {
+                        highlightCountry(rgbKey);
+                        updateSelectionPanel(rgbKey);
+                    }
+                }
+            }
+        });
+
+        function highlightCountry(targetRgbKey) {
+            if (!mapImageData) return;
+            
+            currentHighlightedRgb = targetRgbKey;
+            
+            ctxHighlight.clearRect(0, 0, mapWidth, mapHeight);
+            
+            const [tr, tg, tb] = targetRgbKey.split(',').map(Number);
+            const highlightData = ctxHighlight.createImageData(mapWidth, mapHeight);
+            
+            const data = mapImageData.data;
+            const hData = highlightData.data;
+            const len = data.length;
+
+            // Updated Highlight color to match the theme (Indigo/Purple)
+            const hr = 79, hg = 70, hb = 229, ha = 160;
+
+            for (let i = 0; i < len; i += 4) {
+                if (data[i] === tr && data[i+1] === tg && data[i+2] === tb && data[i+3] > 0) {
+                    hData[i] = hr;
+                    hData[i+1] = hg;
+                    hData[i+2] = hb;
+                    hData[i+3] = ha;
+                }
+            }
+            
+            ctxHighlight.putImageData(highlightData, 0, 0);
+        }
+
+        function updateSelectionPanel(rgbKey) {
+            const country = countryColorMap[rgbKey];
+            const isPlayer = (rgbKey === playerCountryColor);
+            
+            if (isPlayer) {
+                $('#player-badge').show();
+            } else {
+                $('#player-badge').hide();
+            }
+
+            if (country) {
+                $('#selected-country-name').text(country.name);
+                $('#country-details').text(`Territorium-ID: ${country.id} | Status: Bereit für Befehle.`);
+            } else {
+                $('#selected-country-name').text("Unerforschtes Territorium");
+                $('#country-details').text(`Sektor-Farbcode: [${rgbKey}]`);
+            }
+            
+            $('#order-text').val('');
+        }
+
+        $('#submit-order').on('click', function() {
+            const orderText = $('#order-text').val();
+            const countryName = $('#selected-country-name').text();
+            
+            if (!orderText.trim()) {
+                alert("Bitte gib eine Anweisung ein, bevor du übermittelst.");
+                return;
+            }
+
+            const $btn = $(this);
+            const originalText = $btn.text();
+            
+            $btn.text("Übertrage...").prop('disabled', true);
+            
+            setTimeout(() => {
+                console.log(`Befehl an KI-Master für ${countryName} gesendet: ${orderText}`);
+                
+                $btn.text("Anweisung erhalten").css("background", "#34d399"); // Success color
+                $('#order-text').val('');
+                
+                setTimeout(() => {
+                    $btn.text(originalText).css("background", "").prop('disabled', false);
+                }, 2000);
+            }, 800);
+        });
+
+    </script>
+</body>
+</html>
